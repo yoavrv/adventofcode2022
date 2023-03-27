@@ -29,7 +29,7 @@ int main() {
 
         if ( '0' < curr_char && curr_char < '9'){  
                 // new digit in number
-                item = 10*item + curr_char - 48;
+                item = 10*item + curr_char - '0';
         } else if (curr_char=='\n')  { 
             // number is done or a new blank line
             value+=item;
@@ -47,6 +47,8 @@ int main() {
         prev_char=curr_char;
     }
     // end of file, but we might have one last item
+    value+=item;
+    item=0;
     if (value>max_value){
         max_value=value;
         index_max_value=index;
