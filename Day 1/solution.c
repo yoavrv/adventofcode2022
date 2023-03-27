@@ -3,6 +3,7 @@
 
 int main() {
     FILE *fp;
+    FILE *fp2;
     int ind=0;
     int start_line=0;
     int end_line=0;
@@ -12,24 +13,38 @@ int main() {
     int max_value=0;
     int index_max_value=0;
     char curr_char='\n';
+    char curr_char2='\n';
     char prev_char='\n';
 
     fp = fopen("./input","r");
+    fp2 = fopen("./input","r");
     // todo once c works on windows
     if (fp==NULL) {
         perror("Error opening \"input\" file");
     }
-    while ( !feof(fp) && ind<100){
-        ind++;
+    while ( !feof(fp) && ind<10){
         // save position if we are starting a new line
+        fprintf(stdout,"%d:  ",ind);
         if (prev_char=='\n'){ 
             start_line=ftell(fp);
-            fprintf(stdout,"start line: %d\n",start_line);
+            fprintf(stdout,"new line starts at: %d ; ", ftell(fp));
         }
         
         // advance to next character
+        fprintf(stdout,"fp1 at: %d", ftell(fp));
         curr_char=fgetc(fp);
-        fprintf(stdout,"%d: %c\n",ind,curr_char);
+        if (curr_char=='\n')  { 
+            fprintf(stdout,"->%d: \\n ",ftell(fp));
+        } else {
+            fprintf(stdout,"->%d: %c ",ftell(fp),curr_char);
+        }
+        fprintf(stdout,"fp2 at: %d", ftell(fp2));
+        curr_char2=fgetc(fp2);
+        if (curr_char2=='\n')  { 
+            fprintf(stdout,"->%d: \\n\n",ftell(fp2));
+        } else {
+            fprintf(stdout,"->%d: %c\n",ftell(fp2),curr_char2);
+        }
         if (curr_char==NULL){
             perror("Error: Null character in file");
         }
@@ -57,8 +72,9 @@ int main() {
                 fseek(fp, end_line, SEEK_SET); // return to end of number
                 fprintf(stdout,"at: %d\n", ftell(fp));
             }
-        }
+        } 
         prev_char=curr_char;
+        ind++;
     }
     // end of file, but we might have one last item
     if (prev_char!='\n'){
