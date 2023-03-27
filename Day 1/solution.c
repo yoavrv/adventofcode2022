@@ -35,6 +35,8 @@ int main() {
         curr_char=fgetc(fp);
         if (curr_char=='\n')  { 
             fprintf(stdout,"->%d: \\n ",ftell(fp));
+        } else if (curr_char=='\r') {
+            fprintf(stdout,"->%d: \\r ",ftell(fp),curr_char);
         } else {
             fprintf(stdout,"->%d: %c ",ftell(fp),curr_char);
         }
@@ -42,6 +44,8 @@ int main() {
         curr_char2=fgetc(fp2);
         if (curr_char2=='\n')  { 
             fprintf(stdout,"->%d: \\n\n",ftell(fp2));
+        } else if (curr_char2=='\r') {
+            fprintf(stdout,"->%d: \\r ",ftell(fp2),curr_char2);
         } else {
             fprintf(stdout,"->%d: %c\n",ftell(fp2),curr_char2);
         }
