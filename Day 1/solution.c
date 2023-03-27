@@ -27,7 +27,7 @@ int main() {
         //     fprintf(stdout,"->%d: %c ",ftell(fp),curr_char);
         // }
 
-        if ( '0' < curr_char && curr_char < '9'){  
+        if ( '0' <= curr_char && curr_char <= '9'){  
                 // new digit in number
                 item = 10*item + curr_char - '0';
         } else if (curr_char=='\n')  { 
