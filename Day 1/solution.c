@@ -1,13 +1,41 @@
 #include <stdio.h>
 #include <string.h>
 
+int update_max_value(int new_value, int new_index,int* max_value, int* index_max_value, int len){
+    int i=0;
+    int new=0;
+    for (i=0;i<len;i++){
+        if (new_value>max_value[i]){
+            new=1;
+            if (i!=0){
+                max_value[i-1]=max_value[i];
+                index_max_value[i-1]=index_max_value[i];
+            }
+            max_value[i]=new_value;
+            index_max_value[i]=new_index;
+        }
+    }
+    return new;
+}
+
+int print_max_values(int* max_value, int* index_max_value, int len){
+    int i=0;
+    int total=0;
+    for (i=0;i<len;i++){
+        fprintf(stdout,"%d: %d\n",index_max_value[i],max_value[i]);
+        total+=max_value[i];
+        }
+    return total;
+}
+
+
 int main() {
     FILE *fp;
     int item=0;
     int value=0;
     int index=0;
-    int max_value=0;
-    int index_max_value=0;
+    int max_value[3]={0,0,0};
+    int index_max_value[3]={0,0,0};
     char curr_char='\n';
     char prev_char='\n';
 
@@ -36,10 +64,7 @@ int main() {
             item=0;
             if (prev_char=='\n'){ 
                 // new blank line: save value and index
-                if (value>max_value){
-                    max_value=value;
-                    index_max_value=index;
-                }
+                update_max_value(value,index,max_value,index_max_value,3);
                 value=0;
                 index++;
             } 
@@ -49,12 +74,11 @@ int main() {
     // end of file, but we might have one last item
     value+=item;
     item=0;
-    if (value>max_value){
-        max_value=value;
-        index_max_value=index;
-    }
-    
+    update_max_value(value,index,max_value,index_max_value,3);
+
     fclose(fp);
-    fprintf(stdout,"Maximum value %d is list number %d\n",max_value, index_max_value);
+    fprintf(stdout,"Top three:\n");
+    item=print_max_values(max_value, index_max_value, 3);
+    fprintf(stdout,"total: %d\n",item);
 }
 
