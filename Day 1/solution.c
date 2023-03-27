@@ -10,6 +10,7 @@ int main() {
 
     fp = fopen("input","r");
     // todo once c works on windows
+    // going back to it
     fclose(fp);
 
 }
