@@ -34,8 +34,8 @@ int main(int argc, char *argv[]) {
     if (argc == 1) {
         fp = stdin;
     } else { 
-        fprintf(stdout,"Opening %s", argv) ;
-        fp = fopen(*argv,"r");
+        fprintf(stdout,"Opening %s", argv[1]) ;
+        fp = fopen(argv[1],"r");
         if (fp==NULL) {
             perror("Error opening file");
         }
