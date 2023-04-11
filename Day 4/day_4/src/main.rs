@@ -31,7 +31,7 @@ fn main() {
                 println!("First {low1}, {high1} contains {low2},{high2} ");
             }
         }
-        if low1>low2 && high1<high2 {
+        else if low1>=low2 && high1<=high2 {
             containing += 1 ;
             if i<10 {
                 println!("First {low1}, {high1} is contained in {low2},{high2}");
