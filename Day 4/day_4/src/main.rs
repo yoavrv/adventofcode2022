@@ -19,24 +19,30 @@ fn main() {
         Some(filename) => Box::new(BufReader::new(fs::File::open(filename).unwrap()))
     };
 
-    let mut overlapping: u32 = 0;
+    let mut containing: u32 = 0;
     for (i,line) in reader.lines().enumerate() {
         if i<10 {
-            println!("{:?}", line);
+            println!("Line: {:?}, number of containing {containing}", line);
         }
         let (low1, high1,low2,high2) = parse_line(&line.unwrap());
-        if (low1<low2 && high1<high2) || (low1<low2 && high1<high2) {
-            overlapping += 1 ;
+        if low1<=low2 && high1>=high2 {
+            containing += 1 ;
             if i<10 {
-                println!("overlapping {low1}, {high1},{low2},{high2} {overlapping}");
+                println!("First {low1}, {high1} contains {low2},{high2} ");
+            }
+        }
+        if low1>low2 && high1<high2 {
+            containing += 1 ;
+            if i<10 {
+                println!("First {low1}, {high1} is contained in {low2},{high2}");
             }
         }
         else {
             if i<10 {
-                println!("not overlapping {low1}, {high1},{low2},{high2} {overlapping}");
+                println!("No pair contains the other");
             }
         }
     }
-    println!("Final overlapping count: {overlapping}")
+    println!("Final containing count: {containing}")
 }
 
