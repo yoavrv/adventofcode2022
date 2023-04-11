@@ -20,29 +20,53 @@ fn main() {
     };
 
     let mut containing: u32 = 0;
+    let mut overlapping: u32 = 0;
+    let max_debug = 20;
     for (i,line) in reader.lines().enumerate() {
-        if i<10 {
-            println!("Line: {:?}, number of containing {containing}", line);
+        if i< max_debug {
+            println!("Line: {:?}, number of containing {containing}, number of overlapping {overlapping}", line);
         }
         let (low1, high1,low2,high2) = parse_line(&line.unwrap());
+
+        // overlapp
+        if low1<=low2 && low2<=high1 {
+            overlapping += 1;
+            if i< max_debug {
+                println!("* overlapp in {low1}, {high1} with {low2},{high2} ");
+            }
+        }
+        else if low2<=low1 && low1<=high2 {
+            overlapping += 1;
+            if i< max_debug {
+                println!("* overlapp in {low1}, {high1} with {low2},{high2} ");
+            }
+        }
+        else {
+            if i< max_debug {
+                println!("* no overlap in {low1}, {high1}, {low2},{high2} ");
+            }
+        }
+
+        //contain
         if low1<=low2 && high1>=high2 {
             containing += 1 ;
-            if i<10 {
-                println!("First {low1}, {high1} contains {low2},{high2} ");
+            if i< max_debug {
+                println!("** First {low1}, {high1} contains {low2},{high2} ");
             }
         }
         else if low1>=low2 && high1<=high2 {
             containing += 1 ;
-            if i<10 {
-                println!("First {low1}, {high1} is contained in {low2},{high2}");
+            if i< max_debug  {
+                println!("** First {low1}, {high1} is contained in {low2},{high2}");
             }
         }
         else {
-            if i<10 {
-                println!("No pair contains the other");
+            if i< max_debug  {
+                println!("** No pair contains the other");
             }
         }
     }
-    println!("Final containing count: {containing}")
+    println!("Final containing count: {containing}");
+    println!("Final overlapping count: {overlapping}");
 }
 
