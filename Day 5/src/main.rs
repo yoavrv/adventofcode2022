@@ -110,13 +110,13 @@ fn main() {
         if i<10 {
             println!("{:?}",(num, from, to));
         }
-        // let l = vecs[from-1].len()-num;
-        // let v: Vec<char> = vecs[from-1].drain(l..).collect();
-        // vecs[to-1].extend(v);
-        for _i in 0..num {
-            let c = vecs[from-1].pop().unwrap();
-            vecs[to-1].push(c);
-        }
+        let l = vecs[from-1].len()-num;
+        let v: Vec<char> = vecs[from-1].drain(l..).collect();
+        vecs[to-1].extend(v);
+        // for _i in 0..num {
+        //     let c = vecs[from-1].pop().unwrap();
+        //     vecs[to-1].push(c);
+        // }
         if i<10 {
             println!("{num} {from} {to}");
             let s = vecs_to_str(&vecs);
