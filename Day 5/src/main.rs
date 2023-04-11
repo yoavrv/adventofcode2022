@@ -37,7 +37,7 @@ fn vecs_to_str(vecs: &Vec<Vec<char>>) -> String {
         }
         s.push('\n');
     }
-    for (j, vec) in vecs.iter().enumerate() {
+    for j in 0..vecs.len() {
         if j!=0 {
             s.push(' ');
         }
@@ -110,9 +110,13 @@ fn main() {
         if i<10 {
             println!("{:?}",(num, from, to));
         }
-        let l = vecs[from-1].len()-num;
-        let v: Vec<char> = vecs[from-1].drain(l..).collect();
-        vecs[to-1].extend(v);
+        // let l = vecs[from-1].len()-num;
+        // let v: Vec<char> = vecs[from-1].drain(l..).collect();
+        // vecs[to-1].extend(v);
+        for _i in 0..num {
+            let c = vecs[from-1].pop().unwrap();
+            vecs[to-1].push(c);
+        }
         if i<10 {
             println!("{num} {from} {to}");
             let s = vecs_to_str(&vecs);
@@ -123,4 +127,5 @@ fn main() {
     println!("done after {} steps",steps);
     let s = vecs_to_str(&vecs);
     println!("{}",s);
+    println!("finals: {:?}",vecs.iter().map(|v| v.last().unwrap()).collect::<Vec<&char>>());
 }
