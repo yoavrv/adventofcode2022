@@ -97,6 +97,7 @@ fn main() {
     let s = vecs_to_str(&vecs);
     println!("pretty please print\n{}",s);
     let (mut num, mut from ,mut to): (usize,usize,usize);
+    let mut steps =0;
     for (i, line) in iter_lines.enumerate() {
         // do a move
         if i<10 {
@@ -117,7 +118,9 @@ fn main() {
             let s = vecs_to_str(&vecs);
             println!("{}",s);
         }
+        steps+=1;
     }
+    println!("done after {} steps",steps);
     let s = vecs_to_str(&vecs);
     println!("{}",s);
 }
