@@ -18,9 +18,25 @@ fn main() {
         None => Box::new(BufReader::new(io::stdin())),
         Some(filename) => Box::new(BufReader::new(fs::File::open(filename).unwrap()))
     };
-    for line in reader.lines() {
-        println!("{:?}", line);
-        println!("{:?}", parse_line(&line.unwrap()));
+
+    let mut overlapping: u32 = 0;
+    for (i,line) in reader.lines().enumerate() {
+        if i<10 {
+            println!("{:?}", line);
+        }
+        let (low1, high1,low2,high2) = parse_line(&line.unwrap());
+        if (low1<low2 && high1<high2) || (low1<low2 && high1<high2) {
+            overlapping += 1 ;
+            if i<10 {
+                println!("overlapping {low1}, {high1},{low2},{high2} {overlapping}");
+            }
+        }
+        else {
+            if i<10 {
+                println!("not overlapping {low1}, {high1},{low2},{high2} {overlapping}");
+            }
+        }
     }
+    println!("Final overlapping count: {overlapping}")
 }
 
