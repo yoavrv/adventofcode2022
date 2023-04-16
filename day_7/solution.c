@@ -18,7 +18,16 @@ FILE* open_file_or_stdin(int argc,char **argv){
     return fp;
 }
 
-#define debug_lines 400
+long int rec_sum_directory_sizes(file_bundle* bundle, long int maximum){
+    if (bundle->type!=directory) return 0;
+    long int size_sum=0;
+    int i=0;
+    directory_bundle_children* children = bundle->data;
+    for (i=0;i<children->n;i++) size_sum+=rec_sum_directory_sizes(children->bundles[i],maximum);
+    if (bundle->size<maximum) size_sum+=bundle->size;
+    return size_sum;
+}  
+
 int main(int argc, char **argv) {
     FILE *fp;
     file_bundle* origin=init_new_empty_bundle(NULL,"/");
@@ -40,18 +49,13 @@ int main(int argc, char **argv) {
         bundle=NULL;
         success=0;
         size=0;
-        if (i<debug_lines)  fprintf(stdout,"%d: %s\t\t\t\t",i,buff);
-        if (i<debug_lines) fprintf(stdout," at %s\n",curr_dir->name);
 
         if (buff[0]=='$') {
             // read new command
             command = find_command(buff+2);
-            
-            if (i<10) fprintf(stdout,"read command: %d\n",command);
 
             if (command==cd) {
                 // find where to go
-                if (i<debug_lines) fprintf(stdout,"cd to ");
                 if (sscanf(buff,"$ cd %s",name)==1) success=find_directory_rec(curr_dir,&bundle,name);
                 if (success!=0  && (strcmp(name,"..")!=0) ){
                     // we encountered a new directory
@@ -59,55 +63,36 @@ int main(int argc, char **argv) {
                     if (bundle==NULL) fprintf(stdout,"failed allocation at %d",i);
                     init_directory_bundle(bundle);
                     success=0;
-                    if (i<debug_lines)  fprintf(stdout,"new ");
- 
                 }
                 if (success==0) curr_dir=bundle;
-                
-                if (i<debug_lines) fprintf(stdout,"directory: %s\n",name);
-
             } // else if (command==ls) wait for next line)
 
         } else if (command==ls){
             if (strncmp(buff,"dir",3)==0){
                 //directory in format "dir name"
-                if (i<debug_lines)  fprintf(stdout,"ls ");
                 if (sscanf(buff,"dir %s",name)==1) success=find_directory_rec(curr_dir,&bundle,name);
                 if (success!=0 && (strcmp(name,"..")!=0)){
                     // we encountered a new directory
                     bundle=init_new_empty_bundle(curr_dir,name);
                     if (bundle==NULL) fprintf(stdout,"failed allocation at %d",i);
                     init_directory_bundle(bundle);
-
-                    if (i<debug_lines)  fprintf(stdout,"new ");
                 }
 
-                if (i<debug_lines)  fprintf(stdout,"directory: %s\n",name);
             } else { 
                 // not a directory in format "size name"
-                if (i<debug_lines)  fprintf(stdout,"ls ");
                 if (sscanf(buff,"%d %s",&size,name)==2) success=find_file_rec(curr_dir,&bundle,name);
                 if (success!=0){
                     // we encountered a new file
                     bundle=init_new_empty_bundle(curr_dir,name);
                     if (bundle==NULL) fprintf(stdout,"failed allocation at %d",i);
                     init_binary_file_bundle(bundle,size,NULL);
-                    if (i<debug_lines)  fprintf(stdout,"new ");
                 }
-                if (i<debug_lines)  fprintf(stdout,"file: %s\n",name);
             }
         } // else if (command==cd) in the same line as $
-        if (i==debug_lines){
-            print_bundle(origin,0);
-        }
-        if((i%100)==0) fprintf(stdout,"done %d\n",i);
-        if (i==815){
-            print_bundle(origin,0);
-            fprintf(stdout," at %s\n",curr_dir->name);
-        }
         i++;
     }
     fprintf(stdout,"done\n");
+    fprintf(stdout,"size is %ld",rec_sum_directory_sizes(origin,100000));
     swell(origin);
     remove_bundle(origin);
     fclose(fp);    

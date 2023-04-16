@@ -42,7 +42,7 @@ int remove_bundle_from_parent_children(file_bundle *bundle);
 
 int init_directory_bundle(file_bundle* bundle);
 
-int init_binary_file_bundle(file_bundle* bundle, int size, void* data);
+int init_binary_file_bundle(file_bundle* bundle, long int size, void* data);
 
 int remove_bundle_rec(file_bundle* bundle);
 
