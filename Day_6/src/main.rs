@@ -11,6 +11,8 @@ fn update_array<const N:usize>(array: &mut [char; N],c: char){
     array[array.len()-1]=c;
 }
 
+// Well, it almost certainly not faster than the O(N^2) solution (direct comparisons)
+// or O(Nlog(N)) solution (sorting) for our N, but it is O(N)
 fn array_has_duplicates<const N:usize>(array: [char; N]) -> bool{
     HashSet::from(array).len()<N
 }
