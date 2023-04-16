@@ -26,7 +26,31 @@ long int rec_sum_directory_sizes(file_bundle* bundle, long int maximum){
     for (i=0;i<children->n;i++) size_sum+=rec_sum_directory_sizes(children->bundles[i],maximum);
     if (bundle->size<maximum) size_sum+=bundle->size;
     return size_sum;
-}  
+}
+
+file_bundle* rec_find_minimum_directory_to_delete(file_bundle* curr, file_bundle* best, long int size_needed){
+    if (curr->type!=directory || curr->size<size_needed) return best;
+    file_bundle* curr_best=best;
+    if (curr->size < curr_best->size) curr_best=curr;
+    file_bundle* check=curr;
+    int i=0;
+    directory_bundle_children* children = curr->data;
+    for (i=0;i<children->n;i++) {
+        check = rec_find_minimum_directory_to_delete(children->bundles[i], curr_best, size_needed);
+        if (check->size < curr_best->size){
+            curr_best=check;
+        }
+    }
+    return curr_best;
+}
+
+file_bundle* find_minimum_directory_to_delete(file_bundle* origin, long int total_system_size, long int size_needed){
+    long int current_free = total_system_size - origin->size;
+    long int to_delete = size_needed - current_free;
+    if (to_delete<=0) return NULL;
+    return rec_find_minimum_directory_to_delete(origin, origin, to_delete);
+
+}
 
 int main(int argc, char **argv) {
     FILE *fp;
@@ -92,7 +116,9 @@ int main(int argc, char **argv) {
         i++;
     }
     fprintf(stdout,"done\n");
-    fprintf(stdout,"size is %ld",rec_sum_directory_sizes(origin,100000));
+    fprintf(stdout,"size is %ld\n",rec_sum_directory_sizes(origin,100000));
+    file_bundle* to_delete=find_minimum_directory_to_delete(origin,70000000,30000000);
+    fprintf(stdout,"Directory to delete: %s of size %ld\n",to_delete->name,to_delete->size);
     swell(origin);
     remove_bundle(origin);
     fclose(fp);    
