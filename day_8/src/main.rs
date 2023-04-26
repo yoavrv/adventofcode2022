@@ -66,14 +66,17 @@ fn edge_visible(heights: &Vec<Vec<u32>>) -> (usize, Vec<Vec<bool>>) {
 }
 
 // This will be easier if we utilize the limited range of digits 0-9
-// We save the latest index of each tree size
-// So if we have item 7 we can look at the position of the last 7,8, or 9
-//  [2   4   3   2]
-//>[0,0,0,0,0,0]
-//   > [0,0,1,0,0]               dist=0-max(0,0,0)+1
-//       > [0,0,1,0,2]           dist=1-max(0,0)+1
-//           > [0,0,1,3,2]       dist=2-max(0,2)+1
-//                > [0,0,4,3,2]  dist=3-max(1,3,2)+1
+// We save the latest index of each tree size in an array
+// So if we have item 4 we look at the index of the last 4,5,6,7,8, or 9
+//  for example, if we have a line [2   4   3   2], then an array of the index of 0-4 digits will be updated as
+//>[0,0,0,0,0]
+//   > [0,0,0,0,0]               dist=0-max([0,0,0]), latest index of 2 is 0 ("special" case of edge)
+//       > [0,0,0,0,1]           dist=1-max([0]),     latest index of 4 is 1
+//           > [0,0,0,2,1]       dist=2-max([0,1]),   latest index of 3 is 2
+//                > [0,0,3,2,1]  dist=3-max([0,2,1])  latest index of 2 is 3
+// We maintain a single array for the left-right direction, and a row of arrays for the up-down (to traverse the row all at once in a row-major order)
+// We look first to the left and above by running over the vector-of-vector in the row-major order
+// then we look to the right and below by running over in reverse (still in row-major order)
 fn inner_visible(heights: &Vec<Vec<u32>>) -> (u32, Vec<Vec<u32>>) {
     let mut score: Vec<Vec<u32>>= heights.iter().map(|x| vec![1;x.len()] ).collect();
     let max_row_len: usize = score.iter().map(|x| x.len()).max().unwrap();
@@ -90,17 +93,8 @@ fn inner_visible(heights: &Vec<Vec<u32>>) -> (u32, Vec<Vec<u32>>) {
             if 9<height {
                 panic!("invalid height>9");
             }
-            if j==0 {
-                score[i][j]=0;
-            } else {
-                score[i][j] *= (j-leftright_idx.iter().skip(height).max().unwrap()) as u32;
-            }
-
-            if i==0{
-                score[i][j] *= 0;
-            } else {
-                score[i][j] *= (i-row_updown_idx[j].iter().skip(height).max().unwrap()) as u32;
-            }
+            score[i][j] *= (j-leftright_idx.iter().skip(height).max().unwrap()) as u32;
+            score[i][j] *= (i-row_updown_idx[j].iter().skip(height).max().unwrap()) as u32;
 
             leftright_idx[height]=j;
             row_updown_idx[j][height]=i;
@@ -124,17 +118,8 @@ fn inner_visible(heights: &Vec<Vec<u32>>) -> (u32, Vec<Vec<u32>>) {
             if 9<height {
                 panic!("invalid height>9");
             }
-            if j==row.len()-1 {
-                score[i][j] *= 0;
-            } else {
-                score[i][j] *= (leftright_idx.iter().skip(height).min().unwrap()-j) as u32;
-            }
-
-            if i==score.len()-1 {
-                score[i][j] *= 0;
-            } else {
-                score[i][j] *= (row_updown_idx[j].iter().skip(height).min().unwrap()-i) as u32;
-            }
+            score[i][j] *= (leftright_idx.iter().skip(height).min().unwrap()-j) as u32;
+            score[i][j] *= (row_updown_idx[j].iter().skip(height).min().unwrap()-i) as u32;
 
             leftright_idx[height]=j;
             row_updown_idx[j][height]=i;
