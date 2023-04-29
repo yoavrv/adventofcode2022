@@ -14,15 +14,14 @@ fn stdin_or_first_reader() -> Box<dyn BufRead> {
     return reader
 }
 
-type Counter<K> = HashMap<K,usize>;
-type SparseGridCounter<K> = Counter<(K,K)>;
-
-fn add1<K: Eq+ PartialEq + std::hash::Hash>(grid: &mut SparseGridCounter<K>, x: K, y: K){
-    grid.entry((x,y)).and_modify(|e| {*e+=1}).or_insert(1);
-}
 
 fn main() {
-    let mut visits : SparseGridCounter<i32>= SparseGridCounter::new();
-    add1(&mut visits,0,0);
+    let mut visits : HashMap<(i32,i32),usize>= HashMap::new();
+    let mut add1_at = |x: i32, y: i32| {
+        visits.entry((x,y)).and_modify(|e| {*e+=1}).or_insert(1);
+    };
+    add1_at(0,0);
+    add1_at(-1,-1);
+    add1_at(3,-5);
     println!("{:?}",visits);
 }
