@@ -15,13 +15,42 @@ fn stdin_or_first_reader() -> Box<dyn BufRead> {
 }
 
 
+#[derive(Debug)]
+enum CommandDir {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+fn parse_move_line(line: &str) -> Option<(CommandDir, i32)> {
+    // line is format "R number"
+    let mut it = line.split_whitespace();
+    let mut com: Option<CommandDir> = None;
+    match it.next()? {
+        "U" => com = Some(CommandDir::Up),
+        "D" => com = Some(CommandDir::Down),
+        "L" => com = Some(CommandDir::Left),
+        "R" => com = Some(CommandDir::Right),
+        _ => com = None,
+    };
+    if let Some(cm) = com { 
+        return Some((cm,it.next()?.parse::<i32>().ok()?));
+    } else {
+        return None;
+    }
+}
+
+
 fn main() {
     let mut visits : HashMap<(i32,i32),usize>= HashMap::new();
-    let mut add1_at = |x: i32, y: i32| {
+    let add1_at = |x: i32, y: i32| {
         visits.entry((x,y)).and_modify(|e| {*e+=1}).or_insert(1);
     };
-    add1_at(0,0);
-    add1_at(-1,-1);
-    add1_at(3,-5);
+    
+    for line in stdin_or_first_reader().lines() {
+        println!("{:?}",parse_move_line(&line.unwrap()));
+    }
+
     println!("{:?}",visits);
 }
