@@ -1,7 +1,7 @@
 use std::fs;
 use std::io::{self, BufRead, BufReader};
 use std::env;
-use std::collections::HashMap;
+use std::collections::HashSet;
 
 // stolen from stackoverflow https://stackoverflow.com/a/49964042
 // Reads from file in first argument or stdin
@@ -26,15 +26,15 @@ enum CommandDir {
 fn parse_move_line(line: &str) -> Option<(CommandDir, i32)> {
     // line is format "R number"
     let mut it = line.split_whitespace();
-    let mut com: Option<CommandDir> = None;
+    let mut command: Option<CommandDir>;
     match it.next()? {
-        "U" => com = Some(CommandDir::Up),
-        "D" => com = Some(CommandDir::Down),
-        "L" => com = Some(CommandDir::Left),
-        "R" => com = Some(CommandDir::Right),
-        _ => com = None,
+        "U" => command = Some(CommandDir::Up),
+        "D" => command = Some(CommandDir::Down),
+        "L" => command = Some(CommandDir::Left),
+        "R" => command = Some(CommandDir::Right),
+        _ => command = None,
     };
-    if let Some(cm) = com { 
+    if let Some(cm) = command { 
         return Some((cm,it.next()?.parse::<i32>().ok()?));
     } else {
         return None;
@@ -43,14 +43,70 @@ fn parse_move_line(line: &str) -> Option<(CommandDir, i32)> {
 
 
 fn main() {
-    let mut visits : HashMap<(i32,i32),usize>= HashMap::new();
-    let add1_at = |x: i32, y: i32| {
-        visits.entry((x,y)).and_modify(|e| {*e+=1}).or_insert(1);
+    let mut visits : HashSet<(i32,i32)>= HashSet::new();
+    let mut visit = |x: i32, y: i32| {
+        visits.insert((x,y));
     };
     
+    let mut dx_head: i32=0;
+    let mut x_tail: i32=0;
+    let mut dy_head: i32=0;
+    let mut y_tail: i32=0;
+    visit(x_tail,y_tail);
     for line in stdin_or_first_reader().lines() {
-        println!("{:?}",parse_move_line(&line.unwrap()));
+        if let Ok(lb) = line {
+            match lb.as_str(){
+                "quit" => break,
+                _ => {}
+            }
+            if let Some((command, len)) = parse_move_line(&lb) {
+                for _i in 0..len {
+                    match command {
+                        CommandDir::Up => {
+                            if dy_head==1 {
+                                x_tail+=dx_head;
+                                y_tail+=dy_head;
+                                dx_head=0;
+                                visit(x_tail,y_tail);
+                            } else {
+                                dy_head+=1;
+                            }
+                        },
+                        CommandDir::Down => {
+                            if dy_head==-1 {
+                                x_tail+=dx_head;
+                                y_tail+=dy_head;
+                                dx_head=0;
+                                visit(x_tail,y_tail);
+                            } else {
+                                dy_head-=1;
+                            }
+                        },
+                        CommandDir::Left => {
+                            if dx_head==-1 {
+                                x_tail+=dx_head;
+                                y_tail+=dy_head;
+                                dy_head=0;
+                                visit(x_tail,y_tail);
+                            } else {
+                                dx_head-=1;
+                            }
+                        },
+                        CommandDir::Right => {
+                            if dx_head==1 {
+                                x_tail+=dx_head;
+                                y_tail+=dy_head;
+                                dy_head=0;
+                                visit(x_tail,y_tail);
+                            } else {
+                                dx_head+=1;
+                            }
+                        },
+                    };
+            }
+            }
+        }
     }
 
-    println!("{:?}",visits);
+    println!("Visited {:?} positions",visits.len());
 }
