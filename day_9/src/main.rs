@@ -26,7 +26,7 @@ enum CommandDir {
 fn parse_move_line(line: &str) -> Option<(CommandDir, i32)> {
     // line is format "R number"
     let mut it = line.split_whitespace();
-    let mut command: Option<CommandDir>;
+    let command: Option<CommandDir>;
     match it.next()? {
         "U" => command = Some(CommandDir::Up),
         "D" => command = Some(CommandDir::Down),
@@ -42,69 +42,69 @@ fn parse_move_line(line: &str) -> Option<(CommandDir, i32)> {
 }
 
 
+fn tail(rope: &mut Vec<(i32,i32)>, head_move: Option<(CommandDir, i32)>, visits: &mut HashSet<(i32,i32)>){
+    if let Some((command, len)) = head_move {
+        for _i in 0..len {
+            match command {
+                CommandDir::Up => {
+                    rope[0].1+=1;
+                },
+                CommandDir::Down => {
+                    rope[0].1-=1;
+                },
+                CommandDir::Left => {
+                    rope[0].0-=1;
+                },
+                CommandDir::Right => {
+                    rope[0].0+=1;
+                },
+            };
+            let (mut x, mut y) = rope[0];
+            // [X # $ # X]
+            // [# * * * #]
+            // [$ * O * $]
+            // [# * * * #]
+            // [X # $ # X]
+            for (xt,yt) in rope.iter_mut().skip(1) {
+                let dx = x-*xt;
+                let dy = y-*yt;
+                match (dx,dy) {
+                    (-2,-2) => {*xt-=1;*yt-=1},
+                    (-2,2) => {*xt-=1;*yt+=1},
+                    (2,-2) => {*xt+=1;*yt-=1},
+                    (2,2) => {*xt+=1;*yt+=1},
+                    (-2,dy) => {*xt-=1;*yt+=dy},
+                    (2,dy) => {*xt+=1;*yt+=dy},
+                    (dx, -2) => {*xt+=dx;*yt-=1},
+                    (dx, 2) => {*xt+=dx;*yt+=1},
+                    _=> {break;},
+                }
+                x = *xt;
+                y = *yt;
+            }
+            visits.insert(*rope.last().unwrap());
+        }
+    }
+}
+
 fn main() {
     let mut visits : HashSet<(i32,i32)>= HashSet::new();
-    let mut visit = |x: i32, y: i32| {
-        visits.insert((x,y));
-    };
     
-    let mut dx_head: i32=0;
-    let mut x_tail: i32=0;
-    let mut dy_head: i32=0;
-    let mut y_tail: i32=0;
-    visit(x_tail,y_tail);
+    let mut rope = vec![(0,0);10];
+    visits.insert(*rope.last().unwrap());
+
+
     for line in stdin_or_first_reader().lines() {
         if let Ok(lb) = line {
+            // println!("{}",lb);
+            // print!("{:?}->",rope);
             match lb.as_str(){
                 "quit" => break,
                 _ => {}
             }
-            if let Some((command, len)) = parse_move_line(&lb) {
-                for _i in 0..len {
-                    match command {
-                        CommandDir::Up => {
-                            if dy_head==1 {
-                                x_tail+=dx_head;
-                                y_tail+=dy_head;
-                                dx_head=0;
-                                visit(x_tail,y_tail);
-                            } else {
-                                dy_head+=1;
-                            }
-                        },
-                        CommandDir::Down => {
-                            if dy_head==-1 {
-                                x_tail+=dx_head;
-                                y_tail+=dy_head;
-                                dx_head=0;
-                                visit(x_tail,y_tail);
-                            } else {
-                                dy_head-=1;
-                            }
-                        },
-                        CommandDir::Left => {
-                            if dx_head==-1 {
-                                x_tail+=dx_head;
-                                y_tail+=dy_head;
-                                dy_head=0;
-                                visit(x_tail,y_tail);
-                            } else {
-                                dx_head-=1;
-                            }
-                        },
-                        CommandDir::Right => {
-                            if dx_head==1 {
-                                x_tail+=dx_head;
-                                y_tail+=dy_head;
-                                dy_head=0;
-                                visit(x_tail,y_tail);
-                            } else {
-                                dx_head+=1;
-                            }
-                        },
-                    };
-            }
-            }
+            tail(&mut rope, parse_move_line(&lb), &mut visits);
+            // println!("{:?}",rope);
+            
         }
     }
 
