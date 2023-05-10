@@ -9,6 +9,8 @@
 #include <stdexcept>
 using namespace std;
 
+int ring=1;
+
 class Monkey {
 public:
     vector<int> items;
@@ -145,18 +147,19 @@ std::function<int (int)> parse_operations(string& line){
             // we know there is another token
             if (token=="*") {
                 if (tokens.back()=="old"){
-                    func = [func](int old) {return old*func(old);};
+                    func = [func](int old) {int tmp=func(old), acc=0, loc_ring=ring, tmp2=old; for (int i=0; i<tmp2; i++) {acc+=(tmp); if (acc>ring) acc-=loc_ring;} return acc;}; // could overflow
                 } else {
                     num = stoi(tokens.back());
-                    func = [func,num](int old) {return num*func(old);};
+                    func = [func,num](int old) {int tmp=func(old), acc=0, loc_ring=ring, tmp2=num; for (int i=0; i<tmp2; i++) {acc+=(tmp); if (acc>ring) acc-=loc_ring;} return acc;}; // could overflow
+
                 }
                 tokens.pop_back();
             } else if (token=="+") {
                 if (tokens.back()=="old"){
-                    func = [func](int old) {return old+func(old);};
+                    func = [func](int old) {int n = old+func(old); if (n>ring) n-=ring; return n;};
                 } else {
                     num = stoi(tokens.back());
-                    func = [func,num](int old) {return num+func(old);};
+                    func = [func,num](int old) {int n = num+func(old); if (n>ring) n-=ring; return n;};
                 }
                 tokens.pop_back();
             }
@@ -169,7 +172,7 @@ std::function<int (int)> parse_operations(string& line){
 // parse a string "  Test: divisible by x" anv convert to a test function
 // currently assumes we have "divisible by",
 // add more when/if they show up
-std::function<bool (int)> parse_test(string& line){
+std::function<bool (int)> parse_test(string& line, int &ring){
     std::stringstream item;
     vector<string> tokens;
     std::function<int (int)> func;
@@ -194,6 +197,7 @@ std::function<bool (int)> parse_test(string& line){
         } else {
             item>>num;
             func = [num](int old) {return num;};
+            ring=num;
         }
         // run over the rest if tokens two at a time: ... []fourth  (fifth, []second(third, []{first}) )
         while (!tokens.empty()){
@@ -218,11 +222,11 @@ std::function<bool (int)> parse_test(string& line){
 void main2(std::istream& fin, bool worrying){
     string line,head;
     vector<Monkey> monkies;
-    int num=0;
     bool ret;
     vector<int> first_monkey_ind;
     vector<int> second_monkey_ind;
     int id;
+    int num=1, loc_ring=1;
     while (getline(fin,line)){
         // std::cout << line << std::endl;
         if (line.compare("done")==0) break; // for stdin
@@ -246,7 +250,9 @@ void main2(std::istream& fin, bool worrying){
             // std::cout <<parse_operations(line)(1) <<std::endl;
             getline(fin,line);
             // std::cout <<line <<std::endl;
-            curr_monkey.test = parse_test(line);
+            curr_monkey.test = parse_test(line, num);
+            std::cout << "got num: " <<num <<std::endl;
+            loc_ring *= num;
             getline(fin,line);
             // std::cout <<line <<std::endl;
             head = "    If true: throw to monkey ";
@@ -258,9 +264,12 @@ void main2(std::istream& fin, bool worrying){
 
         }
     }
+    ring = loc_ring;
+    if (!worrying) ring=INT_MAX;
     for (int i=0; i<monkies.size(); i++) {
         monkies[i].first = &(monkies[first_monkey_ind[i]]);
         monkies[i].second = &(monkies[second_monkey_ind[i]]);
+    
     }
     for (auto &monkey: monkies){
             monkey.print();
@@ -276,14 +285,14 @@ void main2(std::istream& fin, bool worrying){
             //     monkey.print();
             // }   
         }
-        std::cout << "########### round " << i << " ###########" << std::endl;
+        std::cout << "########### round " << i+1 << " ###########" << std::endl;
         for (auto &monkey: monkies){
             monkey.print();
         }
     }
 
-    int max_score=0;
-    int sec_max_score=0;
+    long unsigned int max_score=0;
+    long unsigned int sec_max_score=0;
     for (auto &monkey: monkies){
         if (monkey.business>sec_max_score) {
             if (monkey.business>max_score) {
@@ -294,6 +303,32 @@ void main2(std::istream& fin, bool worrying){
             }
         }
     }
-    std::cout << "Monkey business of the situation is " << max_score*sec_max_score << std::endl;
+    std::cout << "Monkey business of the situation after 20 steps is " << max_score*sec_max_score << std::endl;
+
+    for (int i=20; i<10000; i++){
+        for (auto &monkey: monkies){
+            monkey.business += monkey.items.size();
+            monkey.throw_items_to_other_monkies();
+        }
+        if (i%1000==999){
+            std::cout << "########### round " << i+1 << " ###########" << std::endl;
+            for (auto &monkey: monkies){
+                monkey.print();
+            }
+        }
+    }
+    max_score=0;
+    sec_max_score=0;
+    for (auto &monkey: monkies){
+        if (monkey.business>sec_max_score) {
+            if (monkey.business>max_score) {
+                sec_max_score = max_score;
+                max_score = monkey.business;
+            } else {
+                sec_max_score = monkey.business;
+            }
+        }
+    }
+    std::cout << "Monkey business of the situation after 10000 steps is " << max_score*sec_max_score << std::endl;
 
 }
