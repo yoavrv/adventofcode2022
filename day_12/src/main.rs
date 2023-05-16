@@ -60,7 +60,7 @@ fn print_matrix2(v: &Vec<Option<(usize,usize)>>, stride: usize) {
 
 fn matrix_traverse<T: Copy>(v: & Vec<T>, stride: usize, x_start: usize, y_start: usize,
                      traverserule : impl Fn(T,T)->bool, dist_heuristic : impl Fn(usize,usize)->usize, 
-                     endrule : impl Fn(T,usize,usize)->bool) ->(Vec<Option<(usize,usize)>>, Option<usize>) {
+                     endrule : impl Fn(T,usize,usize)->bool) ->(Vec<Option<(usize,usize)>>, Option<(usize,usize,usize)>) {
     let height: usize = v.len()/stride;
     let mut queue_dist: BinaryHeap<QueueItem> = BinaryHeap::with_capacity(v.len()/2);
     let mut prev_xy : Vec<Option<(usize,usize)>> = vec![None; v.len()];
@@ -83,6 +83,8 @@ fn matrix_traverse<T: Copy>(v: & Vec<T>, stride: usize, x_start: usize, y_start:
 
 
     let mut dist=0;
+    let mut x_end=0;
+    let mut y_end=0;
     let mut success=false;
     while !queue_dist.is_empty() && queue_dist.len()<v.len() {
         if let Some(cur_item) = queue_dist.pop() {
@@ -94,6 +96,8 @@ fn matrix_traverse<T: Copy>(v: & Vec<T>, stride: usize, x_start: usize, y_start:
             if endrule(c,x,y) {
                 success=true;
                 dist=cur_item.dist_from;
+                x_end=x;
+                y_end=y;
                 break;
             }
             if 0<x {
@@ -124,7 +128,26 @@ fn matrix_traverse<T: Copy>(v: & Vec<T>, stride: usize, x_start: usize, y_start:
     }
 
 
-    if success {return (prev_xy, Some(dist));} else {return(prev_xy,None);}
+    if success {return (prev_xy, Some((dist,x_end,y_end)));} else {return(prev_xy,None);}
+}
+
+fn print_back_traverse(v: &Vec<char>, prev_xy: &Vec<Option<(usize,usize)>>, stride: usize, x_end: usize, y_end: usize) {
+    let mut cur_item = prev_xy[x_end+stride*y_end];
+    let mut v2 = v.clone();
+    let (mut x1,mut y1) = (x_end, y_end);
+    while cur_item.is_some() {
+        if let Some(item) = cur_item {
+            let (x,y) = item;
+            let index = x+stride*y;
+            if x<x1 {v2[index]='>';};
+            if x1<x {v2[index]='<';};
+            if y<y1 {v2[index]='v';};
+            if y1<y {v2[index]='^';};
+            (x1,y1)=(x,y);
+            cur_item = prev_xy[index];
+        }
+    }
+    print_matrix(&v2, stride);
 }
 
 fn main() {
@@ -164,111 +187,17 @@ fn main() {
     print_matrix(&v,stride);
 
     // show the result is similar:
-    let (solution, distance) = matrix_traverse(&v, stride, x_start, y_start,
+    let (solution, possible) = matrix_traverse(&v, stride, x_start, y_start,
                                          |c,c2| (c2 as u32)<=1+(c as u32),
                                          |x,y| x_end.abs_diff(x)+y_end.abs_diff(y), 
                                          |_c,x,y| x==x_end && y==y_end);
-    if let Some(dist) = distance {
-        println!("Success: distance {dist}");
+    if let Some((distance, x_end, y_end)) = possible {
+        let success=true;
+        println!("Success: distance {distance}");
+        if height<10 && stride<10 {print_matrix2(&solution, stride);}
+        print_back_traverse(&v, &solution, stride, x_end, y_end);
     } else {
+        let success=false;
         println!{"Failure"};
     }
-    if height<10 && stride<10 {print_matrix2(&solution, stride);}
-
-    // these are no longer mut: is there a fixing?
-    
-    let mut queue_dist: BinaryHeap<QueueItem> = BinaryHeap::with_capacity(v.len()/2);
-    let mut prev_xy : Vec<Option<(usize,usize)>> = vec![None; v.len()];
-
-    // distance heuristic
-    let d = |x:usize,y:usize| -> usize {
-        x_end.abs_diff(x)+y_end.abs_diff(y)
-    };
-    
-
-    // first item is special: rev_xy is None
-    queue_dist.push(QueueItem { dist : d(x_start,y_start), dist_from: 0, x: x_start, y: y_start }) ;
-
-    let push = |x:usize,y: usize, path: usize,prev_x: usize,prev_y: usize, queue_dist: &mut BinaryHeap<QueueItem>,prev_xy :  &mut Vec<Option<(usize,usize)>>| {
-        queue_dist.push(QueueItem { dist : d(x, y)+path, dist_from: path, x, y}) ;
-        prev_xy[x+stride*y] = Some((prev_x,prev_y));
-    };
-
-    let find_xy = |x:usize,y:usize, prev_xy: &Vec<Option<(usize,usize)>>| {
-        if x==x_start && y==y_start {return true;};
-        // for (y3, part) in prev_xy.chunks_exact(stride).enumerate() {
-        //     for (x3, item) in part[x.saturating_sub(2)..stride.min(x+2)].iter().enumerate() {
-        //         if let Some( (x2,y2) ) = item {
-        //             if x==*x2 && y==*y2 {return true;};
-        //             if x==x3 && y==y3 {return true;};
-        //         };
-        //     }
-        // }
-        match prev_xy[x+stride*y]{
-            Some(_tup) => return true,
-            None => return false,
-        }
-    };
-
-
-    let mut dist=0;
-    let mut success=false;
-    while !queue_dist.is_empty() && queue_dist.len()<v.len() {
-        if let Some(cur_item) = queue_dist.pop() {
-            // println!("At {:?}",cur_item);
-            if cur_item.x==x_end && cur_item.y==y_end {
-                success=true;
-                dist=cur_item.dist_from;
-                break;
-            }
-            let (x,y, dist_from) : (usize,usize,usize)= (cur_item.x, cur_item.y, cur_item.dist_from+1);
-            let index: usize = x+stride*y;
-            let c: char = v[index];
-            if 0<x {
-                let c2: char = v[index-1];
-                if ((c2 as u32)<=1+(c as u32)) && !find_xy(x-1,y,&prev_xy) {
-                    push(x-1, y, dist_from,x, y, &mut queue_dist, &mut prev_xy);
-                }
-            };
-            if 0<y {
-                let c2 = v[index-stride];
-                if ((c2 as u32)<=1+(c as u32)) && !find_xy(x,y-1,&prev_xy) {
-                    push(x, y-1, dist_from,x, y, &mut queue_dist, &mut prev_xy);
-                }
-            };
-            if x<stride-1 {
-                let c2 = v[index+1];
-                if ((c2 as u32)<=1+(c as u32)) && !find_xy(x+1,y,&prev_xy) {
-                    push(x+1, y, dist_from,x, y, &mut queue_dist, &mut prev_xy);
-                }
-            };
-            if y<height-1 {
-                let c2 = v[index+stride];
-                if ((c2 as u32)<=1+(c as u32)) && !find_xy(x,y+1,&prev_xy) {
-                    push(x, y+1, dist_from,x, y, &mut queue_dist, &mut prev_xy);
-                }
-            };
-        }
-    }
-
-
-    println!("Success: {}",success);
-    println!("heap: {:?}", queue_dist);
-    if height<10 && stride<10 {print_matrix2(&prev_xy, stride);}
-    println!("distance: {}",dist);
-    let mut cur_item = prev_xy[x_end+stride*y_end];
-    let (mut x1,mut y1) = (x_end, y_end);
-    while cur_item.is_some() {
-        if let Some(item) = cur_item {
-            let (x,y) = item;
-            let index = x+stride*y;
-            if x<x1 {v[index]='>'};
-            if x1<x {v[index]='<'};
-            if y<y1 {v[index]='v'};
-            if y1<y {v[index]='^'};
-            (x1,y1)=(x,y);
-            cur_item = prev_xy[index];
-        }
-    }
-    print_matrix(&v,stride);
 }
