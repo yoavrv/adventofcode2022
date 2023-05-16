@@ -58,6 +58,74 @@ fn print_matrix2(v: &Vec<Option<(usize,usize)>>, stride: usize) {
     }
 }
 
+fn matrix_traverse<T: Copy>(v: & Vec<T>, stride: usize, x_start: usize, y_start: usize,
+                     traverserule : impl Fn(T,T)->bool, dist_heuristic : impl Fn(usize,usize)->usize, 
+                     endrule : impl Fn(T,usize,usize)->bool) ->(Vec<Option<(usize,usize)>>, Option<usize>) {
+    let height: usize = v.len()/stride;
+    let mut queue_dist: BinaryHeap<QueueItem> = BinaryHeap::with_capacity(v.len()/2);
+    let mut prev_xy : Vec<Option<(usize,usize)>> = vec![None; v.len()];
+
+    // first item is special: rev_xy is None
+    queue_dist.push(QueueItem { dist : dist_heuristic(x_start,y_start), dist_from: 0, x: x_start, y: y_start }) ;
+
+    let push = |x:usize,y: usize, path: usize,prev_x: usize,prev_y: usize, queue_dist: &mut BinaryHeap<QueueItem>,prev_xy :  &mut Vec<Option<(usize,usize)>>| {
+        queue_dist.push(QueueItem { dist : dist_heuristic(x, y)+path, dist_from: path, x, y}) ;
+        prev_xy[x+stride*y] = Some((prev_x,prev_y));
+    };
+
+    let seen_xy = |x:usize,y:usize, prev_xy: &Vec<Option<(usize,usize)>>| {
+        if x==x_start && y==y_start {return true;}; // special case: start doesn't have previous node but was seen
+        match prev_xy[x+stride*y]{
+            Some(_tup) => return true,
+            None => return false,
+        }
+    };
+
+
+    let mut dist=0;
+    let mut success=false;
+    while !queue_dist.is_empty() && queue_dist.len()<v.len() {
+        if let Some(cur_item) = queue_dist.pop() {
+
+            let (x,y, dist_from) : (usize,usize,usize)= (cur_item.x, cur_item.y, cur_item.dist_from+1);
+            let index: usize = x+stride*y;
+            let c: T = v[index];
+
+            if endrule(c,x,y) {
+                success=true;
+                dist=cur_item.dist_from;
+                break;
+            }
+            if 0<x {
+                let c2: T = v[index-1];
+                if traverserule(c,c2) && !seen_xy(x-1,y,&prev_xy) {
+                    push(x-1, y, dist_from,x, y, &mut queue_dist, &mut prev_xy);
+                }
+            };
+            if 0<y {
+                let c2: T = v[index-stride];
+                if traverserule(c,c2) && !seen_xy(x,y-1,&prev_xy) {
+                    push(x, y-1, dist_from,x, y, &mut queue_dist, &mut prev_xy);
+                }
+            };
+            if x<stride-1 {
+                let c2: T = v[index+1];
+                if traverserule(c,c2) && !seen_xy(x+1,y,&prev_xy) {
+                    push(x+1, y, dist_from,x, y, &mut queue_dist, &mut prev_xy);
+                }
+            };
+            if y<height-1 {
+                let c2: T = v[index+stride];
+                if traverserule(c,c2) && !seen_xy(x,y+1,&prev_xy) {
+                    push(x, y+1, dist_from,x, y, &mut queue_dist, &mut prev_xy);
+                }
+            };
+        }
+    }
+
+
+    if success {return (prev_xy, Some(dist));} else {return(prev_xy,None);}
+}
 
 fn main() {
     let mut v: Vec<char> = Vec::new();
@@ -94,6 +162,18 @@ fn main() {
     v[x_end+stride*y_end]='z';
     println!("we start at {:?} and want to end at {:?}",(x_start,y_start),(x_end,y_end));
     print_matrix(&v,stride);
+
+    // show the result is similar:
+    let (solution, distance) = matrix_traverse(&v, stride, x_start, y_start,
+                                         |c,c2| (c2 as u32)<=1+(c as u32),
+                                         |x,y| x_end.abs_diff(x)+y_end.abs_diff(y), 
+                                         |_c,x,y| x==x_end && y==y_end);
+    if let Some(dist) = distance {
+        println!("Success: distance {dist}");
+    } else {
+        println!{"Failure"};
+    }
+    if height<10 && stride<10 {print_matrix2(&solution, stride);}
 
     // these are no longer mut: is there a fixing?
     

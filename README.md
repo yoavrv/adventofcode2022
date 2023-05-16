@@ -25,3 +25,4 @@ Besides day_1 (which runs the input file in its directory), all other executable
 * **Day 9**: Rust solution, rope is `Vec<(i32,i32)>` of positions, tail is recorded in `HashSet<(i32,i32)>`.  
 * **Day 10**: Trying c++ for the first(ish) time, push into vector `noop`=>`vec.push_back(0)` while `addx x` => `vec.push_back(0),vec.push_back(x)`, then accumulate in simple loops.  
 * **Day 11**: Monkey classes with score over a modulus ring. Originally with clever but too-slow lambda nonesense for parsing the monkeys.  
+* **Day 12**: Rust solution with A* algorithm on implicit graph of the array  
