@@ -181,10 +181,10 @@ fn main() {
         }
         
     }
-    v[x_start+stride*y_start]='a';
-    v[x_end+stride*y_end]='z';
     println!("we start at {:?} and want to end at {:?}",(x_start,y_start),(x_end,y_end));
     print_matrix(&v,stride);
+    v[x_start+stride*y_start]='a';
+    v[x_end+stride*y_end]='z';
 
     // show the result is similar:
     let (solution, possible) = matrix_traverse(&v, stride, x_start, y_start,
@@ -192,12 +192,30 @@ fn main() {
                                          |x,y| x_end.abs_diff(x)+y_end.abs_diff(y), 
                                          |_c,x,y| x==x_end && y==y_end);
     if let Some((distance, x_end, y_end)) = possible {
-        let success=true;
         println!("Success: distance {distance}");
         if height<10 && stride<10 {print_matrix2(&solution, stride);}
         print_back_traverse(&v, &solution, stride, x_end, y_end);
     } else {
-        let success=false;
         println!{"Failure"};
+    }
+
+    println!("\n\n  ##################");
+    println!("  ###            ###");
+    println!("  ###   PART 2   ###");
+    println!("  ###            ###");
+    println!("  ##################\n\n");
+
+    // Now we start at the end and go downhill looking for any a. x_end should remain the same as 'E's location
+    (x_start,y_start) = (x_end,y_end);
+    let (solution, possible) = matrix_traverse(&v, stride, x_start, y_start,
+        |c1,c2| (c1 as u32)<=1+(c2 as u32), // we simply reverse the role of c and c2
+        |_x,_y| 0, // no distance heuristic
+        |_c,_x,_y| _c=='a'); // looking for any bottom
+    if let Some((distance, x_end, y_end)) = possible {
+    println!("Success: distance {distance}");
+    if height<10 && stride<10 {print_matrix2(&solution, stride);}
+    print_back_traverse(&v, &solution, stride, x_end, y_end);
+    } else {
+    println!{"Failure"};
     }
 }
